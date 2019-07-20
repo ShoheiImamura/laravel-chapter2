@@ -4,6 +4,9 @@ theme: "Night"
 transition: "default"
 progress: true
 slideNumber: true
+loop: true
+backgroundTransition: 'zoom'
+
 
 ---
 
@@ -46,13 +49,89 @@ slideNumber: true
 
 ## 2-1 ライフサイクル
 
+- HTTPリクエスト ~ アプリケーション実行 ~ HTTPレスポンスの流れを説明します。
+
 ---
 
 ## 2-1-1 Laravelアプリケーションの実行の流れ
 
+![Laravelアプリケーション実行の流れ](http://sample.com/images/sample.png)
+
+--
+
+### HTTPリクエストからアプリケーションの実行
+
+1. HTTPリクエスト送信
+2. public/index.php にてリクエストインスタンスを生成
+3. HTTPカーネルにリクエストインスタンスを渡す
+4. アプリケーションのセットアップ
+5. ルータに　Request をディスパッチする
+
+
+--
+
+### アプリケーションの実行結果からHTTPレスポンスの出力
+
+- リクエスト処理と逆の向きでレスポンスが返される
+
 ---
 
 ## 2-1-2 エントリポイント
+
+- public/index.php が Laravel アプリケーションの起点となる
+- ドキュメントルート配下に設置、Webサーバを設定する
+
+--
+
+### エントリポイントの全容
+
+[エントリポイントへのリンク]()
+
+--
+
+### オートローダの読み込み
+
+```php
+define('LARAVEL_START', microtime(true));
+require __DIR__.'/../vendor/autoload.php';
+
+```
+
+--
+
+### フレームワークの起動
+
+```php
+$app = require_once __DIR__.'/../bootstrap/app.php';
+```
+
+--
+
+### アプリケーションの実行
+
+```php
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$response = $kernel->handle{
+    $request = Illuminate\Http\Request:capture()
+};
+
+```
+
+--
+
+### HTTPレスポンスの送信
+
+```php
+$response->send();
+```
+
+--
+
+### 終了処理
+
+```php
+$kernel->terminate($request, $response);
+```
 
 ---
 
@@ -102,7 +181,10 @@ slideNumber: true
 
 ## 2章 前半の用語集
 
-| No. | 日本語名 | 英語名 | 説明 |
-|-----|----------|--------|------|
-|     |          |        |      |
+| No. | 日本語名         | 英語名        | 説明                                                                                 |
+|-----|------------------|---------------|--------------------------------------------------------------------------------------|
+| 1   | エントリポイント | entry point   | コンピュータプログラムを構成するコードのうち、最初に実行する事になっている位置のこと |
+| 2   | HTTPリクエスト   | HTTP request  | Web ブラウザからからサーバに送信されるデータ送信要求                                 |
+| 3   | HTTPレスポンス   | HTTP response | サーバが、HTTPリクエストに対して応答するデータ                                       |
+| 4   | オートローダ     | autoloader    | クラスやインターフェイス、トレイトが定義されたPHPファイルを自動で読み込む仕組み      |
 
