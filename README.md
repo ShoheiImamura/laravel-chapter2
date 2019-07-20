@@ -111,9 +111,9 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 
 ```php
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-$response = $kernel->handle{
-    $request = Illuminate\Http\Request:capture()
-};
+$response = $kernel->handle(
+    $request = Illuminate\Http\Request::capture()
+);
 
 ```
 
@@ -137,9 +137,80 @@ $kernel->terminate($request, $response);
 
 ## 2-1-3 HTTPカーネル
 
+- アプリケーションのセットアップ
+- ミドルウェアの設定
+- ルータ実行
+  - Request を与えて、Response を受け取る
+
+--
+
+### HTTPカーネルの実装
+
+- エントリポイントから `handle` メソッドを実行
+- デフォルトでは `App\Http\Kernel`クラスを実行
+  - ミドルウェアの設定のみ記述
+  - 実際の処理は `Illuminate\Foundation\Http\Kernel` クラスに実装
+
+[App\Http\Kernel]()
+[Illuminate\Foundation\Http\Kernel]()
+
+--
+
+### HTTPカーネルのhandleメソッド
+
+- sendRequestThroughRouter() メソッドでアプリケーションを実行している
+- 例外処理が発生した場合は、renderException()メソッドで Responseを生成
+
 ---
 
 ## 2-1-4 ルータ
+
+- 定義されたルートから、Request にマッチするルートを探す
+- マッチすると、そのコントローラ等を実行する
+- `routes/web.php`(APIの場合は`routes/api.php`)に定義する
+
+--
+
+### ルートの定義
+
+- ３種類の割当方法が存在する
+  1. コントローラ名とメソッド名を指定する
+  2. クラス名のみを指定する
+  3. クロージャを指定する
+
+--
+
+### ルートの定義1
+
+#### （コントローラ名とメソッド名を指定）
+
+```php
+Route::get('/tasks', 'TaskController@getTasks');
+```
+
+--
+
+### ルートの定義2
+
+#### （クラス名のみを指定）
+
+
+```php
+Route::post('/tasks', 'AddTaskAction');
+```
+
+--
+
+### ルートの定義３3
+
+#### （クロージャを指定）
+
+
+```php
+Route::get('/hello', function(Request $request){
+    return view('hello);
+});
+```
 
 ---
 
