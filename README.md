@@ -21,7 +21,7 @@ backgroundTransition: 'zoom'
 - 本資料は、Weeyble Laravel 輪読会用の資料です
 - 対応箇所は、2章の前半部分のみです
 - 権利関係で問題がございましたら、ご指摘ください
-- このスライドは reveal.js を使っています
+- このスライドは reveal.js で閲覧することを前提に作成しています
   - 参考：[非エンジニアのためのお手軽reveal.js入門](https://jyun76.github.io/revealjs-vscode/)
 
 --
@@ -489,7 +489,7 @@ $app = app(Illuminate\Constracts\Kernell::class);
 - 通常バインド処理は register メソッドに記載する
   - インスタンス生成時に他のクラスを利用する場合は boot メソッド内に記載する
 
-[AppServiceProviderクラス](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp-chapter-2/app/Providers/AppServiceProvider.php#L1-L28)
+[AppServiceProviderクラス](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp/app/Providers/AppServiceProvider.php#L1-L28)
 
 ```shell
 app
@@ -806,7 +806,7 @@ app()->when(AdminService::class) // AdminService クラスから
 
 - フレームワーク内のクラス、メソッドを`簡単に`利用できる機能
 - 登録されている別名を指定して、ファサードを利用する
-  - [config/app.php](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp-chapter-2/config/app.php#L195-L227) で aliase を登録している
+  - [config/app.php](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp/config/app.php#L195-L227) で aliase を登録している
 
 | 別名   | クラスの実態                            |
 |--------|-----------------------------------------|
