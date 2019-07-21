@@ -21,6 +21,8 @@ backgroundTransition: 'zoom'
 - 本資料は、Weeyble Laravel 輪読会用の資料です
 - 対応箇所は、2章の前半部分のみです
 - 権利関係で問題がございましたら、ご指摘ください
+- このスライドは reveal.js を使っています
+  - 参考：[非エンジニアのためのお手軽reveal.js入門](https://jyun76.github.io/revealjs-vscode/)
 
 --
 
@@ -279,21 +281,299 @@ $kernel->terminate($request, $response);
 
 ## 2-2 サービスコンテナ
 
+### 日本語リファレンス
+
+- [Laravel 5.5 サービスコンテナ
+](https://readouble.com/laravel/5.5/ja/container.html)
+
 ---
 
 ## 2-2-1 サービスコンテナとは
+
+- クラスのインスタンスの生成方法を保持する
+- クラスのインスタンスの要求に対してインスタンスを生成して返す
+- サービスコンテナの実態は Illuminate\Foundation\Aplication クラス
+- サービスコンテナの機能は、継承元の Illuminate\Container\Container クラスに実装される
 
 ---
 
 ## 2-2-2 バインドと解決
 
+- サービスコンテナに対して、インスタンスの生成方法を登録する処理を「バインド」よ呼ぶ
+- 指定されたインスタンスをサービスコンテナが生成して返すことを「解決する」と呼ぶ
+
+![画像]()
+
+### サービスコンテナのインスタンス取得方法
+
+- 3種類の方法を紹介
+  1. app 関数から取得する
+  2. Application::getInstanceメソッドから取得
+  3. Appファサードから取得
+
+### サービスコンテナのインスタンス取得方法例
+
+```php
+//   1. app 関数から取得する
+$app = app();
+
+//   2. Application::getInstanceメソッドから取得
+$app = \Illuminate\Foundation\Application::getInstance();
+
+//   3. Appファサードから取得
+$app = \App::getInstance();
+```
+
+--
+
+### バインドと解決の簡単な例
+
+```php
+use Illuminate\Foundation\App\Application;
+use Monolog\Logger;
+use Psr\Log\LoggerInterface;
+
+class FooLogger
+{
+    protected $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+}
+
+// 「bind」メソッドを用いて、インスタンスの生成処理をクロージャで指定する(バインド)
+app()->bind(FooLogger::class, function (Application $app){ 
+    $logger = new Logger('my_log');
+    return new FooLogger($logger);
+});
+
+// 「make」メソッドを用いて、クラスのインスタンスの生成を要求する(解決)
+$foologger = app()->make(FooLogger::class);
+```
+
 ---
 
 ## 2-2-3 バインド
 
+- サービスコンテナに対して、インスタンスの生成方法を登録する処理を「バインド」よ呼ぶ
+- バインド（サービスコンテナに対してインスタンスの生成方法を登録する）には下記の方法がある
+  1. bind メソッド
+  2. bindif メソッド
+  3. singleton メソッド
+  4. instance メソッド
+  5. when メソッド
+
+--
+
+### bind メソッド
+
+- 最も利用されるバインドメソッド
+- 第1引数に文字列、第2引数にインスタンスの生成処理をクロージャで指定する
+`app()->bind( {文字列} , {クロージャ} )`
+- バインドしたクロージャは解決されるたびに実行される
+  - クロージャに引数を設定し、解決時にパラメータを渡すこともできる
+
+--
+
+### bind メソッドの例
+
+```php
+// Number クラス
+class Number
+{
+    protected $number;
+
+    public function __construct($number = 0)
+    {
+        $this->number = $number;
+    }
+
+    public function getNumber()
+    {
+        return $this->number;
+    }
+}
+
+// Number クラスが要求された場合の返却値を指定する
+app()->bind(Number::class, function(){
+    return new Number();
+});
+
+// Number クラスを要求する
+$numcls = app()->make(Number::class);
+
+// Number インスタンスのメソッドを実行する
+$number= $numcls->getNumber();
+```
+
+--
+
+### singleton メソッド
+
+- 一度作成したインスタンスはキャッシュする
+- 2回目以降の解決では、キャッシュされたインスタンスを返却する
+
+### singleton メソッドの例
+
+```php
+// Number クラスを継承
+class RandomNumber extends Number
+{
+    public function __construct()
+    {
+        // Number クラスのコンストラクタにランダムな値を返す
+        parent::__construct(mt_rand(1,10000));
+    }
+}
+
+app()->singleton('random', function () {
+    return new RandomNumber();
+});
+
+$number1 = app('random');
+$number2 = app('random');
+
+// $number2 は新規に作成されず、キャッシュされたインスタンスが返されるため
+// $number1->getNumber() === $number2->getNumber() となる
+```
+
+--
+
+### Instance メソッド
+
+- すでに生成したインスタンスをサービスコンテナにバインドする
+- Singleton メソッドと同様にサービスコンテナにキャッシュされる
+
+--
+
+### Instance メソッドの例
+
+- あらかじめ生成した number クラスのインスタンスをバインドする
+
+```php
+$numcls = new Number(1001);
+app()->instance('SharedNumber', $numcls);
+
+$number1 = app('ShareNumber');
+$number2 = app('ShareNumber');
+
+// $number1->getNumber() === $number2->getNumber()
+```
+
+--
+
+### 別の文字列による解決処理のバインド
+
+- 第2引数に文字列を指定すると、解決時に第2引数で指定する文字列を解決して返す
+`$app->singleton({文字列}, {文字列})`
+
+```php
+// 別の文字列として解決する処理をバインドする例
+$app->singleton(
+    Illuminate\Constracts\Http\Kernel::class,
+    App\Http\Kernel::class
+);
+
+// App\Http\Kernelというクラスめいにより解決される
+$app = app(Illuminate\Constracts\Kernell::class);
+```
+
+--
+
+### バインドの定義場所
+
+- app\Providers フォルダに ServiceProvider クラスを作成して定義するのがオススメ
+- 既に存在する AppServiceProviderクラス内に定義してもよい
+- 通常バインド処理は register メソッドに記載する
+  - インスタンス生成時に他のクラスを利用する場合は boot メソッド内に記載する
+
+[AppServiceProviderクラス](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp-chapter-2/app/Providers/AppServiceProvider.php#L1-L28)
+
+```shell
+app
+  |--Providers
+     |--AppServiceProvider.php
+     |--AuthServiceProvider.php
+     |--BroadcastServiceProvider.php
+     |--EventServiceProvider.php
+     |--RouteServiceProvider.php
+
+```
+
 ---
 
 ## 2-2-4 解決
+
+- 指定されたインスタンスをサービスコンテナが生成して返すことを「解決する」と呼ぶ
+- サービスコンテナが解決したインスタンスを取得する方法は以下2種類ある
+  1. make メソッド
+  2. app ヘルパ関数
+- バインドしていない文字列も解決できる
+
+--
+
+### make メソッドによる解決
+
+- make メソッドは引数に対象の文字列を指定する
+
+```php
+app()->bind(Number::class, function() {
+    return new Number();
+});
+
+$number1 = app()->make(Number::class);
+```
+
+--
+
+### app ヘルパ関数による解決
+
+- makeメソッドと同じく、appヘルパ関数は引数に文字列を指定する
+
+```php
+app()->bind(Number::class, function() {
+    return new Number();
+});
+
+$number2 = app(Number::class);
+```
+
+--
+
+### バインドしていない文字列の解決
+
+- サービスコンテナには、バインドしていない文字列を解決する機能も存在する
+  - 条件：`解決する文字列がクラス名` && `具象クラス`
+  - サービスコンテナがそのクラスのコンストラクタを実行してインスタンスを返す
+
+--
+
+### バインドしていない文字列の解決例
+
+[Github README.md]()
+
+```php
+// 具象クラス
+class Unbinding
+{
+    protected $name;
+
+    public function __construct($name = '')
+    {
+        $this->name = $name;
+    }
+}
+
+// 具象クラスのコードがあるため、自動でインスタンスが生成、返却される
+$unbinding1 = app()->make(Unbinding::class);
+
+// パラメータを指定して、コンストラクタにわたすこともできる
+$unbinding2 = app()->make(Unbinding::class, ['Hoge']);
+```
+
+
 
 ---
 
@@ -313,4 +593,8 @@ $kernel->terminate($request, $response);
 | 2   | HTTPリクエスト   | HTTP request  | Web ブラウザからからサーバに送信されるデータ送信要求                                 |
 | 3   | HTTPレスポンス   | HTTP response | サーバが、HTTPリクエストに対して応答するデータ                                       |
 | 4   | オートローダ     | autoloader    | クラスやインターフェイス、トレイトが定義されたPHPファイルを自動で読み込む仕組み      |
+
+---
+
+## Laradock による環境構築
 
