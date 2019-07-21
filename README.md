@@ -896,6 +896,6 @@ php artisan key:generate
 上記で環境構築完了です。  
 http://localhost にアクセスすると、Laravel の HOME 画面が表示されます。  
 
-Docker コンテナ内の `/var/www/` とローカルフォルダの `/sampleapp-chapter-2` がマウントされていますので、  
-sampleapp-chapter-2 以下のファイルを更新すると、Docker 内のファイルも更新されます。
+Docker コンテナ内の `/var/www/` とローカルフォルダの `/sampleapp` がマウントされていますので、  
+sampleapp 以下のファイルを更新すると、Docker 内のファイルも更新されます。
 
