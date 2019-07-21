@@ -868,7 +868,7 @@ $debug = \Config::get('app.debug');
 git clone https://github.com/ShoheiImamura/laravel-chapter2.git
 
 # laradock に移動します
-cd laradock
+cd laravel-chapter2/laradock
 
 # .env ファイルを作成します
 cp env-example .env
@@ -884,7 +884,7 @@ docker-compose exec workspace bash
 
 ```shell
 # composer をインストールします
-compsoer install
+composer install
 
 # .env ファイルを作成します
 cp .env.example .env
