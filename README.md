@@ -857,7 +857,45 @@ $debug = \Config::get('app.debug');
 | 3   | HTTPレスポンス   | HTTP response | サーバが、HTTPリクエストに対して応答するデータ                                       |
 | 4   | オートローダ     | autoloader    | クラスやインターフェイス、トレイトが定義されたPHPファイルを自動で読み込む仕組み      |
 
----
+--
 
 ## Laradock による環境構築
+
+### 任意のリポジトリで実施します
+
+```shell
+# 本資料 Github リポジトリを git clone します
+git clone https://github.com/ShoheiImamura/laravel-chapter2.git
+
+# laradock に移動します
+cd laradock
+
+# .env ファイルを作成します
+cp env-example .env
+
+# docker を立ち上げます
+docker-compose up -d nginx mysql
+
+# docker コンテナの中に入ります
+docker-compose exec workspace bash
+```
+
+### 以下 Docker コンテナ内での作業です
+
+```shell
+# composer をインストールします
+compsoer install
+
+# .env ファイルを作成します
+cp .env.example .env
+
+# Laravel の api key を作成します
+php artisan key:generate
+```
+
+上記で環境構築完了です。  
+http://localhost にアクセスすると、Laravel の HOME 画面が表示されます。  
+
+Docker コンテナ内の `/var/www/` とローカルフォルダの `/sampleapp-chapter-2` がマウントされていますので、  
+sampleapp-chapter-2 以下のファイルを更新すると、Docker 内のファイルも更新されます。
 
