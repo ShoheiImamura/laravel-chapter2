@@ -552,7 +552,7 @@ $number2 = app(Number::class);
 
 ### バインドしていない文字列の解決例
 
-[Github README.md]()
+[Github README.md](https://github.com/ShoheiImamura/laravel-chapter2#%E3%83%90%E3%82%A4%E3%83%B3%E3%83%89%E3%81%97%E3%81%A6%E3%81%84%E3%81%AA%E3%81%84%E6%96%87%E5%AD%97%E5%88%97%E3%81%AE%E8%A7%A3%E6%B1%BA%E4%BE%8B)
 
 ```php
 // 具象クラス
@@ -573,11 +573,232 @@ $unbinding1 = app()->make(Unbinding::class);
 $unbinding2 = app()->make(Unbinding::class, ['Hoge']);
 ```
 
-
-
 ---
 
 ## 2-2-5 DIとサービスコンテナ
+
+- クラスやメソッド内で利用する機能を外部から渡す設計パターンをDI(依存性の注入)と呼ぶ
+- 依存性の注入には、以下2種類の方法がある
+  1. コンストラクタインジェクション
+  2. メソッドインジェクション
+
+--
+
+### クラスが別クラスと依存関係にあるコード
+
+- `UserServiceクラス` 内で `MailSenderクラス` を直接指定し、インスタンスを生成する
+
+[Github README.md]()
+
+```php
+// 利用者にメール通知をするクラス
+class UserService
+{
+    public function notice($to, $message)
+    {
+        $mailsender = new MailSender();
+        $meilsenser->send($to, $message);
+    }
+}
+
+class MailSender
+{
+    public function send($to, $message)
+    {
+        // send mail ...
+    }
+}
+```
+
+### クラスが別クラスと依存関係にないコード
+
+- `UserServiceクラス` 内では `MailSenderクラス` を直接指定しない
+- `サービスコンテナ`が、`引数内の文字列`と具象クラスの `MailSenderクラス` とをバインドし、MailSender のインスタンスを返却する
+
+```php
+class UserService
+{
+    public function notice(MailSender $mailsender, $to, $message)
+    {
+        $mailsender->send($to, $message);
+    }
+}
+```
+
+--
+
+### DI(依存性の注入)
+
+- クラスやメソッド内で利用する機能を外部から渡す設計パターンをDI（依存性の注入）という
+- クラス同士が依存している状態よりも、クラスの差し替えの影響を制限できる
+- 具象クラスではなく、抽象クラス（インターフェイス）に依存させることで、クラス間の依存関係を疎にすることができる
+
+--
+
+### 抽象クラス（インターフェイス）に依存したコード
+
+[Github README.md]()
+
+```php
+class UserService
+{
+    // 引数に抽象クラスを指定する
+    public function notice(NotifierInterface $notifier, $to, $message)
+    {
+        $notifier->send($to, $message);
+    }
+}
+
+// 抽象クラス
+interface NotifierInterface
+{
+    public function send($to, $message);
+}
+
+// 具象クラス(メール通知)
+class MailSender implements NotifierInterface
+{
+    public function send($to, $message)
+    {
+        // send mail
+    }
+}
+
+// 具象クラス(PUSH通知)
+class PushSender implements NorifierInterface
+{
+    public function send($to, $message)
+    {
+        // send push notification
+    }
+}
+```
+
+--
+
+### バインドの変更
+
+- インターフェイスと具象クラスのバインドの設定を変更することで、
+- クラス内のコードを変更せずに、クラス内で使用するインスタンスを変更することができる
+
+```php
+// メール送信でユーザ通知する場合
+app()->bind(NotifierInterface::class, function(){
+    return new MailSender();
+})
+
+// PUSH通知でユーザ通知する場合
+app()->bind(NotifierInterface::class, function(){
+    return new PushSender();
+})
+```
+--
+
+### コンストラクタインジェクション
+
+- クラスのコンストラクタの引数でインスタンスを注入する方法
+- コンストラクタ仮引数で、必要なクラスをタイプヒンティングで指定する
+
+--
+
+### コンストラクタインジェクションの例
+
+[Github README.md]()
+
+```php
+class UserService
+{
+    protected $sender;
+
+    public function __construct(NorifierInterface $notifier)
+    {
+        $this->notifier = $notifier;
+    }
+
+    public function notice($no, $message)
+    {
+        $this->notifier->send($to, $message);
+    }
+}
+
+$user = app()->make(UserService::class);
+$user->send('to', 'message');
+```
+
+--
+
+### メソッドインジェクション
+
+- メソッドの引数で必要とするインスタンスを渡す方法
+- メソッドの仮引数を用いて、タイプヒンティングでクラスを指定する
+
+--
+
+### メソッドインジェクションの例
+
+```php
+class UserService
+{
+    public function notice(NotifierInterface $notifier, $to, $message)
+    {
+        $notifier->send($to, $message);
+    }
+}
+
+$service = app(UserService::class);
+app()->call([$service, 'notice'], ['to', 'message']);
+```
+
+--
+
+### コンテキストに応じた解決
+
+- 注入先のクラス名に応じて、異なる具象クラスのインスタンスを生成・返却することができる
+- 「when」メソッドを用いてバインドを行う
+
+| メソッド | 使い方                                     |
+|----------|--------------------------------------------|
+| when     | 引数に注入々のクラス名を指定する           |
+| needs    | 対象のタイプヒンティングを指定する         |
+| give     | サービスコンテナで解決する文字列を指定する |
+
+--
+
+### 異なるインスタンスを要求するクラスの例
+
+- 2種類のクラスで同一名のインターフェイス（`NotifierInterface`）を指定している
+- `UserService`クラスでは `PushSender` インスタンスが注入される
+- `AdminService`クラスでは `MailSender` インスタンスが注入される
+
+```php
+class UserService
+{
+    protected $notifier;
+
+    public function __construct(NotifierInterface $notifier)
+    {
+        $this->notifier = $notifier;
+    }
+}
+
+class AdminService
+{
+    protected $notifier;
+
+    public function __construct(NotifierInterface $notifier)
+    {
+        $this->notifer = $notifier;
+    }
+}
+
+app()->when(UserService::class) // UserService クラスから
+     ->needs(NotifierInterface::class) // NotifierInterface が指定されたら
+     ->give(PushSender::class); // PushSender クラスのインスタンスを返す
+
+app()->when(AdminService::class) // AdminService クラスから
+     ->needs(NotifierInterface::class) // NotifierInterface が指定されたら
+     ->give(MailSender::class); // MailSender クラスのインスタンスを返す
+```
 
 ---
 
