@@ -804,7 +804,49 @@ app()->when(AdminService::class) // AdminService クラスから
 
 ## 2-2-6 ファサード
 
+- フレームワーク内のクラス、メソッドを`簡単に`利用できる機能
+- 登録されている別名を指定して、ファサードを利用する
+  - [config/app.php](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp-chapter-2/config/app.php#L195-L227) で aliase を登録している
+
+| 別名   | クラスの実態                            |
+|--------|-----------------------------------------|
+| App    | Illuminate\Support\Facades\App:class    |
+| Auth   | Illuminate\Support\Facades\Auth:class   |
+| ...    | ...                                     |
+| Config | Illuminate\Support\Facades\Config:class |
+| ...    | ...                                     |
+
+--
+
+### ファサードの利用例
+
+- config ファサードから値を取得する
+
+```php
+$debug = \Config::get('app.debug');
+```
+
+--
+
+### Config ファサードの処理の流れ
+
+1. Config::get('app.debug') がコールされる
+2. Config の実体である Illuminate\Support\Facades\Config クラスの get メソッドを呼び出す
+3. Illuminate\Support\Facades\Configクラスには get メソッドが無いため、スーパークラスの __callStatic メソッドを呼び出す。
+4. __callStatic メソッドでは、getFacadeRootメソッドで操作対象のインスタンスを取得し、getメソッドを実行する（getFacadeRootメソッドで操作対象のインスタンスを取得した文字列を resolveFacadeInstanceメソッドによりサービスコンテナで解決し、取得したインスタンスを返す）
+
+--
+
+### ファサードの注意点
+
+[日本語リファレンス Laravel 5.5 ファサード](https://readouble.com/laravel/5.5/ja/facades.html)
+>ファサードの一番の危険性は、クラスの責任範囲の暴走です。ファサードはとても簡単に使用でき、依存注入も必要ないため、簡単にクラスが成長し続ける結果、一つのクラスで多くのファサードが使われます。依存注入を使用すれば、クラスが大きくなりすぎることに伴う、大きなコンストラクタの視覚的なフィードバックにより、この危険性は抑制されます。ですから、ファサードを使用するときは、クラスの責任範囲を小さくとどめるため、クラスサイズに特に注意をはらいましょう。
+
 ---
+
+## Appendix
+
+--
 
 ## 2章 前半の用語集
 
