@@ -59,7 +59,8 @@ backgroundTransition: 'zoom'
 
 ## 2-1-1 Laravelアプリケーションの実行の流れ
 
-![Laravelアプリケーション実行の流れ](http://sample.com/images/sample.png)
+[README.md](https://github.com/ShoheiImamura/laravel-chapter2#2-1-1-laravel%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E3%81%AE%E5%AE%9F%E8%A1%8C%E3%81%AE%E6%B5%81%E3%82%8C)
+![IMG_20190725_002107494](https://user-images.githubusercontent.com/39234750/61806455-adfc2b00-ae72-11e9-959e-f6912af2e44a.jpg)
 
 --
 
@@ -84,12 +85,15 @@ backgroundTransition: 'zoom'
 
 - public/index.php が Laravel アプリケーションの起点となる
 - ドキュメントルート配下に設置、Webサーバを設定する
+![エントリポイント](https://user-images.githubusercontent.com/39234750/61807514-a63d8600-ae74-11e9-9792-926d3ee13072.jpg)
 
 --
 
 ### エントリポイントの全容
 
-[エントリポイントへのリンク]()
+[/public/index.php](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp/public/index.php#L1)
+![エントリポイント](https://user-images.githubusercontent.com/39234750/61807514-a63d8600-ae74-11e9-9792-926d3ee13072.jpg)
+
 
 --
 
@@ -99,6 +103,13 @@ backgroundTransition: 'zoom'
 define('LARAVEL_START', microtime(true));
 require __DIR__.'/../vendor/autoload.php';
 
+// $app = require_once __DIR__.'/../bootstrap/app.php';
+// $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+// $response = $kernel->handle(
+//     $request = Illuminate\Http\Request::capture()
+// );
+// $response->send();
+// $kernel->terminate($request, $response);
 ```
 
 --
@@ -106,7 +117,17 @@ require __DIR__.'/../vendor/autoload.php';
 ### フレームワークの起動
 
 ```php
+// define('LARAVEL_START', microtime(true));
+// require __DIR__.'/../vendor/autoload.php';
+
 $app = require_once __DIR__.'/../bootstrap/app.php';
+
+// $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+// $response = $kernel->handle(
+//     $request = Illuminate\Http\Request::capture()
+// );
+// $response->send();
+// $kernel->terminate($request, $response);
 ```
 
 --
@@ -114,11 +135,17 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 ### アプリケーションの実行
 
 ```php
+// define('LARAVEL_START', microtime(true));
+// require __DIR__.'/../vendor/autoload.php';
+// $app = require_once __DIR__.'/../bootstrap/app.php';
+
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $response = $kernel->handle(
     $request = Illuminate\Http\Request::capture()
 );
 
+// $response->send();
+// $kernel->terminate($request, $response);
 ```
 
 --
@@ -126,7 +153,17 @@ $response = $kernel->handle(
 ### HTTPレスポンスの送信
 
 ```php
+// define('LARAVEL_START', microtime(true));
+// require __DIR__.'/../vendor/autoload.php';
+// $app = require_once __DIR__.'/../bootstrap/app.php';
+// $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+// $response = $kernel->handle(
+//     $request = Illuminate\Http\Request::capture()
+// );
+
 $response->send();
+
+// $kernel->terminate($request, $response);
 ```
 
 --
@@ -134,6 +171,15 @@ $response->send();
 ### 終了処理
 
 ```php
+// define('LARAVEL_START', microtime(true));
+// require __DIR__.'/../vendor/autoload.php';
+// $app = require_once __DIR__.'/../bootstrap/app.php';
+// $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+// $response = $kernel->handle(
+//     $request = Illuminate\Http\Request::capture()
+// );
+// $response->send();
+
 $kernel->terminate($request, $response);
 ```
 
@@ -145,18 +191,19 @@ $kernel->terminate($request, $response);
 - ミドルウェアの設定
 - ルータ実行
   - Request を与えて、Response を受け取る
+![image](https://user-images.githubusercontent.com/39234750/61808871-3b417e80-ae77-11e9-9eaf-b186b9a5fa34.png)
 
 --
 
-### HTTPカーネルの実装
+### HTTPカーネルのソースコード確認
 
 - エントリポイントから `handle` メソッドを実行
 - デフォルトでは `App\Http\Kernel`クラスを実行
   - ミドルウェアの設定のみ記述
   - 実際の処理は `Illuminate\Foundation\Http\Kernel` クラスに実装
 
-[App\Http\Kernel]()
-[Illuminate\Foundation\Http\Kernel]()
+[App\Http\Kernel](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp/app/Http/Kernel.php#L1)
+[Illuminate\Foundation\Http\Kernel](#)
 
 --
 
@@ -165,28 +212,56 @@ $kernel->terminate($request, $response);
 - sendRequestThroughRouter() メソッドでアプリケーションを実行している
 - 例外処理が発生した場合は、renderException()メソッドで Responseを生成
 
+```php
+public function handle($request){
+    try {
+        $request->enableHttpMethodParameterOverride();
+        $response = $this->sendRequestThroughRouter($request); // 1 ルータを実行
+    } catch (Exception $e) { // 2 例外発生時処理
+        $this->reportException($e);
+        $responcse = $this->renderException($request, $e);
+    } catch (Throwable $e) { // 2' 例外発生時処理
+        $this->reportException($request, $e);
+        $response = $this->renderException($request, $e);
+    }
+    $this->app['events']->dispatch(
+        new Events\RequestHandled($request, $response)
+    );
+}
+```
+
 ---
 
 ## 2-1-4 ルータ
 
 - 定義されたルートから、Request にマッチするルートを探す
-- マッチすると、そのコントローラ等を実行する
-- `routes/web.php`(APIの場合は`routes/api.php`)に定義する
+- マッチした処理を実行する
+- ルートの定義は `routes/web.php`（APIの場合は`routes/api.php`）に記載
+![image](https://user-images.githubusercontent.com/39234750/61811155-d2103a00-ae7b-11e9-9389-ed3bb46ae5d3.png)
 
 --
 
 ### ルートの定義
 
-- ３種類の割当方法が存在する
+- 以下3種類の定義方法がある
   1. コントローラ名とメソッド名を指定する
   2. クラス名のみを指定する
   3. クロージャを指定する
 
+  ```php
+  // 1. コントローラ名とメソッド名を指定
+  Route::get('/tasks', 'TaskController@getTasks');
+  // 2. クラス名のみを指定
+  Route::post('/tasks', 'AddTaskAction');
+  // 3. クロージャをしてい
+  Route::get('/hello', function(Request $request){
+    return view('hello);
+  });
+  ```
+
 --
 
-### ルートの定義1
-
-#### （コントローラ名とメソッド名を指定）
+### ルートの定義（コントローラ名とメソッド名を指定）
 
 - 第2引数に`{コントローラ名}@{メソッド名}`で指定する
 
@@ -198,9 +273,7 @@ $kernel->terminate($request, $response);
 
 --
 
-### ルートの定義2
-
-#### （クラス名のみを指定）
+### ルートの定義（クラス名のみを指定）
 
 - 第2引数に`{クラス名}`のみを指定する
 - __invoke メソッドが存在すれば、そのメソッドを実行する
@@ -211,12 +284,10 @@ $kernel->terminate($request, $response);
 
 --
 
-### ルートの定義３3
+### ルートの定義（クロージャを指定）
 
-#### （クロージャを指定）
-
-- 第2引数に{クロージャ}を指定する
-- 簡単な処理を実装する
+- 第2引数に`{クロージャ}`を指定する
+- 簡単な処理を実装する場合に使う
 - 実際のアプリケーションで使うケースは少ない
 
     ```php
@@ -231,15 +302,18 @@ $kernel->terminate($request, $response);
 
 - RequestやResponseに対する処理を差し込むことができる
 - 暗号化（複合）、セッション実行、認証処理等に利用される
-- 複数のミドルウェアを組み合わせて用いる
+- 複数のミドルウェアを組み合わせて用いることができる
+![image](https://user-images.githubusercontent.com/39234750/61811411-64184280-ae7c-11e9-8060-ef3ac2c64af7.png)
 
 --
 
 ### ミドルウェアの処理
 
-- ミドルウェアとして `handle` メソッドが実行される
+- `handle` メソッド内に記述される
   - 第1引数：Request
   - 第2引数：次に実行するクロージャ
+    - ミドルウェアがある場合は、ミドルウェア
+    - そうでない場合は、コントローラ
 
   ```php
   public function handle($request, Closure $next)
@@ -588,7 +662,7 @@ $unbinding2 = app()->make(Unbinding::class, ['Hoge']);
 
 - `UserServiceクラス` 内で `MailSenderクラス` を直接指定し、インスタンスを生成する
 
-[Github README.md]()
+[Github README.md](https://github.com/ShoheiImamura/laravel-chapter2#%E3%82%AF%E3%83%A9%E3%82%B9%E3%81%8C%E5%88%A5%E3%82%AF%E3%83%A9%E3%82%B9%E3%81%A8%E4%BE%9D%E5%AD%98%E9%96%A2%E4%BF%82%E3%81%AB%E3%81%82%E3%82%8B%E3%82%B3%E3%83%BC%E3%83%89)
 
 ```php
 // 利用者にメール通知をするクラス
@@ -637,7 +711,7 @@ class UserService
 
 ### 抽象クラス（インターフェイス）に依存したコード
 
-[Github README.md]()
+[Github README.md](https://github.com/ShoheiImamura/laravel-chapter2#%E6%8A%BD%E8%B1%A1%E3%82%AF%E3%83%A9%E3%82%B9%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%95%E3%82%A7%E3%82%A4%E3%82%B9%E3%81%AB%E4%BE%9D%E5%AD%98%E3%81%97%E3%81%9F%E3%82%B3%E3%83%BC%E3%83%89)
 
 ```php
 class UserService
@@ -703,7 +777,7 @@ app()->bind(NotifierInterface::class, function(){
 
 ### コンストラクタインジェクションの例
 
-[Github README.md]()
+[Github README.md](https://github.com/ShoheiImamura/laravel-chapter2#%E3%82%B3%E3%83%B3%E3%82%B9%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%82%A4%E3%83%B3%E3%82%B8%E3%82%A7%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E3%81%AE%E4%BE%8B)
 
 ```php
 class UserService
