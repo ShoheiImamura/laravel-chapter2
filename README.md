@@ -349,7 +349,7 @@ public function handle($request){
 
 - 下記例では、サービスクラスを利用する
 
-[TaskController]()
+[TaskController](https://github.com/ShoheiImamura/laravel-chapter2/blob/master/sampleapp/app/Http/Controllers/TaskController.php#L1-L22)
 
 ---
 
@@ -364,7 +364,6 @@ public function handle($request){
 
 ## 2-2-1 サービスコンテナとは
 
-- クラスのインスタンスの生成方法を保持する
 - クラスのインスタンスの要求に対してインスタンスを生成して返す
 - サービスコンテナの実態は Illuminate\Foundation\Aplication クラス
 - サービスコンテナの機能は、継承元の Illuminate\Container\Container クラスに実装される
@@ -376,7 +375,9 @@ public function handle($request){
 - サービスコンテナに対して、インスタンスの生成方法を登録する処理を「バインド」よ呼ぶ
 - 指定されたインスタンスをサービスコンテナが生成して返すことを「解決する」と呼ぶ
 
-![画像]()
+![image](https://user-images.githubusercontent.com/39234750/61812428-73988b00-ae7e-11e9-8ac6-348ff3c70121.png)
+
+--
 
 ### サービスコンテナのインスタンス取得方法
 
@@ -384,6 +385,8 @@ public function handle($request){
   1. app 関数から取得する
   2. Application::getInstanceメソッドから取得
   3. Appファサードから取得
+
+--
 
 ### サービスコンテナのインスタンス取得方法例
 
@@ -401,6 +404,8 @@ $app = \App::getInstance();
 --
 
 ### バインドと解決の簡単な例
+
+[README.md](https://github.com/ShoheiImamura/laravel-chapter2#%E3%83%90%E3%82%A4%E3%83%B3%E3%83%89%E3%81%A8%E8%A7%A3%E6%B1%BA%E3%81%AE%E7%B0%A1%E5%8D%98%E3%81%AA%E4%BE%8B)
 
 ```php
 use Illuminate\Foundation\App\Application;
@@ -488,6 +493,8 @@ $number= $numcls->getNumber();
 
 - 一度作成したインスタンスはキャッシュする
 - 2回目以降の解決では、キャッシュされたインスタンスを返却する
+
+--
 
 ### singleton メソッドの例
 
@@ -766,6 +773,7 @@ app()->bind(NotifierInterface::class, function(){
     return new PushSender();
 })
 ```
+
 --
 
 ### コンストラクタインジェクション
@@ -920,16 +928,22 @@ $debug = \Config::get('app.debug');
 
 ## Appendix
 
+[README.md](https://github.com/ShoheiImamura/laravel-chapter2#appendix)
+
 --
 
 ## 2章 前半の用語集
 
-| No. | 日本語名         | 英語名        | 説明                                                                                 |
-|-----|------------------|---------------|--------------------------------------------------------------------------------------|
-| 1   | エントリポイント | entry point   | コンピュータプログラムを構成するコードのうち、最初に実行する事になっている位置のこと |
-| 2   | HTTPリクエスト   | HTTP request  | Web ブラウザからからサーバに送信されるデータ送信要求                                 |
-| 3   | HTTPレスポンス   | HTTP response | サーバが、HTTPリクエストに対して応答するデータ                                       |
-| 4   | オートローダ     | autoloader    | クラスやインターフェイス、トレイトが定義されたPHPファイルを自動で読み込む仕組み      |
+| No. | 日本語名         | 英語名               | 説明                                                                                 |
+|-----|------------------|----------------------|--------------------------------------------------------------------------------------|
+| 1   | エントリポイント | entry point          | コンピュータプログラムを構成するコードのうち、最初に実行する事になっている位置のこと |
+| 2   | HTTPリクエスト   | HTTP request         | Web ブラウザからからサーバに送信されるデータ送信要求                                 |
+| 3   | HTTPレスポンス   | HTTP response        | サーバが、HTTPリクエストに対して応答するデータ                                       |
+| 4   | オートローダ     | autoloader           | クラスやインターフェイス、トレイトが定義されたPHPファイルを自動で読み込む仕組み      |
+| 5   | サービスコンテナ | Service Container    | クラス間の依存を管理する強力な管理ツール                                             |
+| 6   | バインド         | bind                 | サービスコンテナに対して、インスタンスの生成方法を登録する処理                       |
+| 7   | 解決             | resolve              | 指定されたインスタンスをサービスコンテナが生成して返すこと                           |
+| 8   | 依存性の解決     | Dependency Injection | クラスやメソッド内で利用する機能を外部から渡す設計パターン                           |
 
 --
 
